@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Form
 from sqlmodel import Session
 from app.crud import create_user, get_user, update_user, change_password, delete_user, User
 from app.models import UserCreate, UserUpdate, ChangePassword
@@ -9,8 +9,19 @@ from app.auth import (
     authenticate_user,
     get_current_active_user,
 )
+from fastapi.security import OAuth2PasswordRequestForm  # For OAuth2 form handling
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+# Enable CORS (for Swagger UI testing purposes; you may adjust origins as needed)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust as needed
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Create the tables at startup
 @app.on_event("startup")
@@ -23,13 +34,17 @@ def read_root():
 
 # Endpoint to obtain JWT token
 @app.post("/token")
-def login(email: str, password: str, session: Session = Depends(get_session)):
-    user = authenticate_user(email, password, session)
+def login(
+    username: str = Form(...), 
+    password: str = Form(...), 
+    session: Session = Depends(get_session)
+):
+    user = authenticate_user(username, password, session)
     if not user:
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
-
 # Endpoint for User Registration
 @app.post("/register/", response_model=User)
 def register_user(user: UserCreate, session: Session = Depends(get_session)):
@@ -39,7 +54,7 @@ def register_user(user: UserCreate, session: Session = Depends(get_session)):
         email=user.email,
         hashed_password=get_password_hash(user.password)  # Hash the password
     )
-    return create_user(user_in_db, session)  # Use the existing create_user function
+    return create_user(user_in_db, session)
 
 # Routes for User operations
 @app.post("/add_user/", response_model=User, dependencies=[Depends(get_current_active_user)])  # Protect this route
