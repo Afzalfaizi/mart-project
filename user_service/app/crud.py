@@ -14,17 +14,18 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 # Create User
-def create_user(user: User, session: Session = Depends(get_session)):  # Changed from 'Users' to 'User'
+def create_user(user: User, session: Session = Depends(get_session)):  # Adjusted parameter type
     statement = select(User).where(User.email == user.email)
     existing_user = session.exec(statement).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    hashed_password = hash_password(user.password)
+    hashed_password = hash_password(user.hashed_password)  # Changed to use hashed_password
     new_user = User(
-        name=user.name,
+        username=user.username,
+        full_name=user.full_name,
         email=user.email,
-        password=hashed_password,
+        hashed_password=hashed_password,
         user_type=1
     )
 
@@ -46,8 +47,8 @@ def update_user(user_id: int, user_update: UserUpdate, session: Session = Depend
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user_update.name:
-        user.name = user_update.name
+    if user_update.username:
+        user.username = user_update.username
     if user_update.email:
         statement = select(User).where(User.email == user_update.email)
         existing_user = session.exec(statement).first()
@@ -66,7 +67,7 @@ def change_password(user_id: int, password_data: ChangePassword, session: Sessio
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user.password = hash_password(password_data.password)
+    user.hashed_password = hash_password(password_data.password)  # Changed to hashed_password
     session.add(user)
     session.commit()
     session.refresh(user)

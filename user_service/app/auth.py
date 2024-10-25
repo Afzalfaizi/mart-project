@@ -5,14 +5,14 @@ from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
 from sqlmodel import Session
-from models import User  # Assuming User is defined in models.py
-from database import get_session  # Assuming get_session is your session dependency
+from .models import User
+from .db import get_session  # Ensure this is pointing to your session dependency
+from app.settings import ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY, ALGORITHM
 
-
-# Password hashing and verification context
+# Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# OAuth2 scheme for token generation and verification
+# OAuth2 scheme for token generation
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Function to hash password
@@ -20,36 +20,30 @@ def get_password_hash(password: str):
     return pwd_context.hash(password)
 
 # Function to verify password
-def verify_password(plain_password, hashed_password):
+def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
-# Function to retrieve user from the database
-def get_user_from_db(email: str, session: Session):
-    user = session.query(User).filter(User.email == email).first()
-    return user
+# Retrieve user from the database by email
+def get_user_by_email(email: str, session: Session) -> Optional[User]:
+    return session.query(User).filter(User.email == email).first()
 
-# Authenticate the user by verifying credentials
-def authenticate_user(email: str, password: str, session: Session):
-    user = get_user_from_db(email, session)
-    if not user:
-        return None
-    if not verify_password(password, user.hashed_password):
+# Authenticate user
+def authenticate_user(email: str, password: str, session: Session) -> Optional[User]:
+    user = get_user_by_email(email, session)
+    if not user or not verify_password(password, user.hashed_password):
         return None
     return user
 
-# Create access token for the authenticated user
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+# Create access token
+def create_access_token(data: dict) -> str:
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# Get current user based on the JWT token
-def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)):
+# Get current user from token
+def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -63,13 +57,13 @@ def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Dep
     except JWTError:
         raise credentials_exception
 
-    user = get_user_from_db(email, session)
+    user = get_user_by_email(email, session)
     if user is None:
         raise credentials_exception
     return user
 
-# Check if the user is active
-def get_current_active_user(current_user: User = Depends(get_current_user)):
+# Check if user is active
+def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
