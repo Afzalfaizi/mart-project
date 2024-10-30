@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message Newuser {
+    string userName = 1;
+    string email = 2;
+}
+
+
+
+// docker exec -it <cont-name> /bin/bash
+
+// cd app
+
+// protoc --python_out=. todo.proto

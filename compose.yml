@@ -1,58 +1,36 @@
 version: "3.9"
 
-name: Mart-User
+name: mart_user  # Project name in lowercase and without hyphens
 
 services:
-  api:
+  user_service:
     build:
       context: ./user_service
       dockerfile: Dockerfile.dev
     depends_on:
-        - postgres_db
+      - postgres_db
+      - broker
     ports:
       - "8000:8000"  # Expose container port 8000 to host port 8000  
     networks:
-      - my-api-net
-      
+      - my_api_net
+    volumes:
+      - ./user_service:/code  
+
   postgres_db:
-    image: postgres:latest # Use the official PostgreSQL image
+    image: postgres:latest  # Use the official PostgreSQL image
     restart: always
-    container_name: PostgresCont
+    container_name: postgres_db  # Consistent container naming
     environment:
-      - POSTGRES_USER=ziakhan
-      - POSTGRES_PASSWORD=my_password
-      - POSTGRES_DB=mydatabase
+      POSTGRES_USER: ziakhan
+      POSTGRES_PASSWORD: my_password
+      POSTGRES_DB: mydatabase
     ports:
       - "5480:5432"
     volumes:
       - postgres_db:/var/lib/postgresql/data
-
-  postgres_product_db:
-    image: postgres:latest # Use the official PostgreSQL image
-    restart: always
-    container_name: PostgresProductsCont
-    environment:
-      - POSTGRES_USER=ziakhan
-      - POSTGRES_PASSWORD=my_password
-      - POSTGRES_DB=mydatabase
-    ports:
-      - "5481:5432"
-    volumes:
-      - postgres_product_db:/var/lib/postgresql/data
-
-  postgres_inventory_db:
-    image: postgres:latest # Use the official PostgreSQL image
-    restart: always
-    container_name: PostgresInventoryCont
-    environment:
-      - POSTGRES_USER=ziakhan
-      - POSTGRES_PASSWORD=my_password
-      - POSTGRES_DB=mydatabase
-    ports:
-      - "5482:5432"
-    volumes:
-      - postgres_inventory_db:/var/lib/postgresql/data
-
+    networks:
+      - my_api_net
 
   broker:
     image: apache/kafka:3.7.0
@@ -75,10 +53,12 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_LOG_DIRS: "/tmp/kraft-combined-logs"
+    networks:
+      - my_api_net
 
-  kafka-ui:
+  kafka_ui:
     image: provectuslabs/kafka-ui
-    container_name: kafka-ui
+    container_name: kafka_ui
     ports:
       - "8080:8080"
     environment:
@@ -87,15 +67,15 @@ services:
       DYNAMIC_CONFIG_ENABLED: "true"
     depends_on:
       - broker
+    networks:
+      - my_api_net
 
 volumes:
   postgres_db:
-    driver: local
-  postgres_product_db:
     driver: local
   postgres_inventory_db:
     driver: local
 
 networks:
-  default:
+  my_api_net:
     driver: bridge

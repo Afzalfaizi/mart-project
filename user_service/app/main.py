@@ -61,7 +61,7 @@ def register_user(user: UserCreate, session: Session = Depends(get_session)):
 def create_new_user(user: User, session: Session = Depends(get_session)):
     return create_user(user, session)
 
-@app.get("/get_user/{user_id}", response_model=User, dependencies=[Depends(get_current_active_user)])  # Protect this route
+@app.get("/get_user/{user_id}", response_model=User)  # Protect this route
 def read_user(user_id: int, session: Session = Depends(get_session)):
     return get_user(user_id, session)
 
