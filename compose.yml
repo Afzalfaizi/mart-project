@@ -11,11 +11,24 @@ services:
       - postgres_db
       - broker
     ports:
-      - "8000:8000"  # Expose container port 8081 to host port 8081  
+      - "8000:8000"  # Expose container port 8000 to host port 8000
     networks:
       - my_api_net
     volumes:
       - ./user_service:/code  
+  product_service:
+    build:
+      context: ./product_service
+      dockerfile: Dockerfile.dev
+    depends_on:
+      - postgres_db
+      - broker
+    ports:
+      - "8001:8001"  # Expose container port 8000 to host port 8000
+    networks:
+      - my_api_net
+    volumes:
+      - ./product_service:/code 
 
   postgres_db:
     image: postgres:latest  # Use the official PostgreSQL image

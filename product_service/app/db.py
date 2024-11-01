@@ -1,4 +1,6 @@
 from sqlmodel import SQLModel, Session, create_engine
+from app import settings
+
 
 
 connection_string=str(settings.DATABASE_URL)
