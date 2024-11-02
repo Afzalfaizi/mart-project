@@ -1,9 +1,6 @@
 from aiokafka import AIOKafkaProducer,AIOKafkaConsumer  # type: ignore
 
 
-
-
-
 async def kafka_consumer(topic,bootstrap_servers):
     consumer = AIOKafkaConsumer(topic,bootstrap_servers=bootstrap_servers,
                                 group_id="my-group",
