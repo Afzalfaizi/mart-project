@@ -1,5 +1,7 @@
-from sqlmodel import SQLModel, Field
-from typing import List, Optional
+from sqlmodel import SQLModel, Field, Relationship
+from typing import Optional
+from sqlalchemy import Column, String
+from sqlalchemy.dialects.postgresql import JSON
 
 class OrderItem(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -10,5 +12,5 @@ class OrderItem(SQLModel, table=True):
 class Order(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int
-    items: List[OrderItem] = []
+    items: list[OrderItem] = Field(default_factory=list, sa_column=Column(JSON))
     status: str
