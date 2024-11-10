@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Session, create_engine
 from app import settings
 
-
+#database connection
 connection_string=str(settings.DATABASE_URL)
 print(connection_string)
 engine = create_engine(connection_string, echo=True, pool_pre_ping=True)
