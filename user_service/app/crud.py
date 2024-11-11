@@ -20,7 +20,7 @@ def create_user(user: User, session: Session = Depends(get_session)):  # Adjuste
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    hashed_password = hash_password(user.hashed_password)  # Changed to use hashed_password
+    hashed_password = hash_password(user.hashed_password)
     new_user = User(
         username=user.username,
         full_name=user.full_name,
