@@ -12,3 +12,4 @@ message Newuser {
 // cd app
 
 // protoc --python_out=. todo.proto
+// # user.proto file 
