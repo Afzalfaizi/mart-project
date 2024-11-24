@@ -31,7 +31,3 @@ async def root():
 
 app.include_router(router=router)
 app.include_router(router=router2)
-
-
-
-# E Mart By Faizi Developer
