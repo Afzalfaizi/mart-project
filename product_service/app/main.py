@@ -27,7 +27,7 @@ app = FastAPI(lifespan=lifespan,
 
 @app.get("/")
 async def root():
-    return {"message": "welcome to the E_Mart product Service"}
+    return {"message": "welcome to the E-Mart product Service"}
 
 app.include_router(router=router)
 app.include_router(router=router2)

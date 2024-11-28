@@ -9,3 +9,4 @@ def get_session():
 
 def init_db():
     SQLModel.metadata.create_all(engine)
+# get data from database
